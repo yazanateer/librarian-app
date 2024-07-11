@@ -1,0 +1,49 @@
+.libr-section {
+    background-image: url(../../../img/librBack2.png);
+    background-size: cover; /* or background-size: contain; */
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100vh;  /* Full viewport height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    box-sizing: border-box;    
+}
+.home-container-libr {
+    width: 100%;
+ }
+
+.header_libr{ 
+    color: white;
+    font-size: 70px;
+    text-align: center;
+}
+
+.para-do{ 
+    color: white;
+    font-size: 50px;
+    text-align: center;
+    margin: 10xp 0;
+}
+
+.libr-card-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.libr-card{
+    background-color: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0,0.1);
+    min-width: 200px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 30px;
+    text-decoration: none;
+    color: black;
+
+}
