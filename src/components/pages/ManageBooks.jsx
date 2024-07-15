@@ -5,10 +5,14 @@ import axios from "axios";
 
 export const ManageBooks = ({user}) => {
     const [searchInput, setSearchInput] = useState("");
+    const [searchRemoveInput, setSearchRemoveInput] = useState("");
     const [searchResults, setSearchResults] = useState([]);
+    const [searchResultss, setSearchResultss] = useState([]);
     const [showSearchForm, setShowSearchForm] = useState(false);
+    const [showSearchFormm, setShowSearchFormm] = useState(false);
     const [userDetails] = useState({ superapp: "citylibrary", email: user ? user.userid.email: "" }); 
     const [booksList, setBooksList] = useState([]);
+ 
 
 
 
@@ -22,6 +26,16 @@ export const ManageBooks = ({user}) => {
         const books = await handleSearch(searchInput, "", ""); 
         setSearchResults(books);
     };
+    const handleDelBook = async (e) => {
+        e.preventDefault();
+        await handleDelSearch(searchRemoveInput); 
+        
+    };
+
+
+     
+
+
 
      const limit_description = (description) => {
         if (!description) {
@@ -81,49 +95,63 @@ export const ManageBooks = ({user}) => {
 
 
 
-    // const addBookToLibrary = async (book) => {
-    //     const objectBoundary = {
-    //         objectId: { superapp: "citylibrary", internalObjectId: book.id },
-    //         type: "Book",
-    //         alias: truncate(book.title, 100),
-    //         location: { lat: 0, lng: 0 },
-    //         active: true,
-    //         creationTimestamp: new Date().toISOString(),
-    //         createdBy: {
-    //             userId: {
-    //                 superapp: userDetails.superapp,
-    //                 email: userDetails.email,
-    //             }
-    //         },
-    //         objectDetails: {
-    //             // authors : book.authors,
-    //             categories :   book.categories,
-    //             // description : book.description,
-    //             thumbnail: book.thumbnail,
-    //         }
-    //     };
-
-    //     console.log("Sending payload:", JSON.stringify(objectBoundary, null, 2)); // Log payload
-
-    //     try {
-    //         const response = await axios.post("http://localhost:8084/superapp/objects", objectBoundary, {
-    //             headers: { 'Content-Type': 'application/json' }
-    //         });
-    //         console.log("Book Added to the library successfully:", response.data);
-    //     } catch (error) {
-    //         console.error("Error Adding the book:", error);
-    //     }
-
-    // };
 
 
 
+    const handleDelSearch = async (title) => {
+        try {
+            const response = await axios.get(`http://localhost:8084/superapp/objects/search/byType/Book`, {
+                params: {
+                    title: title,
+                    userSuperapp: userDetails.superapp,
+                    userEmail: userDetails.email,
+                    size: 20,
+                    page: 0
+                },
+            });
+            if (response.data) {
+                const books = response.data.map((item) => ({
+                    id: item.objectId.internalObjectId,
+                    title: item.alias,
+                    authors: item.objectDetails.authors,
+                    categories: item.objectDetails.categories,
+                    description: limit_description(item.objectDetails.description),
+                    thumbnail: item.objectDetails.thumbnail,
+                }));
+
+
+
+                 // Filter the books based on the title
+                const filteredBooks = books.filter(book =>
+                    book.title.toLowerCase().includes(title.toLowerCase())
+                );
+
+                setSearchResultss(filteredBooks);
+
+                
+            } else {
+                setSearchResultss([]);
+            }
+        } catch (error) {
+            console.error("Error fetching the books from library:", error);
+            setSearchResultss([]);
+        }
+    };
 
 
 
 
 
-     const addBookToLibrary = async (book, invokedBy) => {
+
+
+
+
+
+
+
+
+
+    const addBookToLibrary = async (book, invokedBy) => {
         const objectBoundary = {
             objectId: { superapp: "citylibrary", internalObjectId: book.id },
             type: "Book",
@@ -134,7 +162,7 @@ export const ManageBooks = ({user}) => {
             createdBy: {
                 userId: {
                     superapp: userDetails.superapp,
-                    email: userDetails.email,
+                    email: `${invokedBy}`,
                 }
             },
             objectDetails: {
@@ -154,31 +182,42 @@ export const ManageBooks = ({user}) => {
                 commandAttributes: objectBoundary,
                 invokedBy: {
                     email: `${invokedBy}`
+                },
+                targetObject: {
+                    internalObjectId: " " 
                 }
             });
             console.log("Book Added to the library successfully:", response.data);
+            alert("Book Added to the library successfully");
         } catch (error) {
+            console.log("the invoked is",invokedBy);
             console.error("Error Adding the book:", error);
         }
     };
 
+    const handleDeleteBook = async (book) => {
+        try {
+            const response = await axios.post("http://localhost:8084/superapp/miniapp/librarian_miniapp", {
+                command: "removebook",
+                commandAttributes: {
+                    title: book.title
+                },
+                invokedBy: {
+                    email: userDetails.email
+                },
+                targetObject: {
+                    internalObjectId: book.id
+                }
+            });
 
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    const handleDeleteBook = async (bookId) => {
+            if (response.data) {
+                console.log("Book borrowed successfully:", response.data);
+            }
+        } catch (error) {
+            console.error("Error borrowing the book:", error);
+        }
     };
+
 
     const trackBookStatus = async () => {
         try {
@@ -218,7 +257,7 @@ export const ManageBooks = ({user}) => {
                                             <p>{book.authors && book.authors.join(", ")}</p>
                                             <p>{book.categories && book.categories.join(", ")}</p>
                                             <p>{book.description}</p>
-                                            <button onClick={() => addBookToLibrary(book)}>Add Book</button>
+                                            <button onClick={() => addBookToLibrary(book,userDetails.email)}>Add Book</button>
                                         </div>
                                     ))
                                 ) : (
@@ -231,12 +270,56 @@ export const ManageBooks = ({user}) => {
             
 
 
-            {/* Remove Books Section */}
-            <div className="manage-books-section">
-                <h3>Remove Books from the Library</h3>
-                <button className="manage_btn" onClick={handleDeleteBook}>Remove Book</button>
-                {/* Add form or content for removing books */}
-            </div>
+
+        
+            
+                {/* Remove Books Section */}
+                <div className="manage-books-section">
+                    <h3>Remove Books from the Library</h3>
+                    <button className="manage_btn" onClick={() => setShowSearchFormm(!showSearchFormm)}>Remove Book</button>
+                    {showSearchFormm && (
+                        <div>
+                            <form onSubmit={handleDelBook}>
+                                <input
+                                    type="text"
+                                    value={searchRemoveInput}
+                                    onChange={(e) => setSearchRemoveInput(e.target.value)}
+                                    placeholder="Enter book title"
+                                />
+                                <button type="submit" className="manage_btn">Search</button>
+                            </form>
+                            <div className="results-container">
+                                {searchResultss.length > 0 ? (
+                                    searchResultss.map((book) => (
+                                        <div key={book.id} className="book-item">
+                                            {book.thumbnail && <img src={book.thumbnail} alt={`${book.title} thumbnail`} />}
+                                            <h2>{book.title}</h2>
+                                            <p>{book.authors && book.authors.join(", ")}</p>
+                                            <p>{book.categories && book.categories.join(", ")}</p>
+                                            <p>{book.description}</p>
+                                            <button onClick={() => handleDeleteBook(book)}>Remove Book</button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No results found.</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             {/* Track Status Section */}
             <div className="manage-books-section">
@@ -264,6 +347,8 @@ export const ManageBooks = ({user}) => {
                 </div>
         </div>
         </div>
+
+        
     );
 };
 

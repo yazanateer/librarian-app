@@ -24,9 +24,9 @@ export const Login = ({ onLoginSuccess }) => {
         })
         .then(data => {
             console.log(data);
-            if (data.role !== "ADMIN") {
-                throw new Error('Access denied: User is not an ADMIN');
-            }
+            // if (data.role !== "ADMIN") {
+            //     throw new Error('Access denied: User is not an ADMIN');
+            // }
             alert('Login success');
             onLoginSuccess(data);
             navigate('/LibrarianDash');
