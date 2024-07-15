@@ -28,7 +28,7 @@ function App() {
       <Route path="/Register" element={<Register />} />
       <Route path="/SearchBook" element={<SearchBook />} />
       <Route path="/ManageBooks" element={<ManageBooks user={user}/>} />
-      <Route path="/ManagePatrons" element={<ManagePatrons />} />
+      <Route path="/ManagePatrons" element={<ManagePatrons user={user} />} />
       <Route path="/LibrarianDash" element={<LibrarianDash user={user}/>} />
     </Routes>
     </div>
