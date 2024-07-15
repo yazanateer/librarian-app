@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import "../pages/css_pages/ManageBooks.css";  
-import { handleSearch } from "./SearchBook";
 import axios from "axios";
 
 
@@ -24,62 +23,107 @@ export const ManageBooks = ({user}) => {
         setSearchResults(books);
     };
 
+     const limit_description = (description) => {
+        if (!description) {
+            return "No description available.";
+        }
+        const words = description.split(" ");
+        let result = [];
+        if (words.length > 30) {
+            for (let i = 0; i < 30; i++) {
+                result.push(words[i]);
+            }
+        } else {
+            result = [...words];
+        }
+        const final_result = result.join(" ") + "...";
+        return final_result;
+    };
 
 
-
-
-
-    const handleSearch = async (e) => {
-        e.preventDefault();
+        const handleSearch = async (title, author, genre, invokedBy) => {
         try {
-            const response = await axios.get(`http://localhost:8084/superapp/objects/search/byType/Book`, {
-                params: {
-                    
-                    // title: title,
-                    userSuperapp: userDetails.superapp,
-                    userEmail: userDetails.email,
-                    size: 20,
-                    page: 0
+            const response = await axios.post("http://localhost:8084/superapp/miniapp/librarian_miniapp", {
+                command: "searchbooks",
+                commandAttributes: {
+                    title: title,
+                    author: author,
+                    genre: genre
                 },
+                invokedBy: {
+                    email: `${invokedBy}`
+                },
+                targetObject: {
+                    internalObjectId: " " 
+                }
             });
+    
             if (response.data) {
+                console.log('Response Data:', response.data); // Debugging line
                 const books = response.data.map((item) => ({
-                    id: item.objectId.internalObjectId,
-                    title: item.alias,
-                    // authors: item.objectDetails.authors,
-                    // categories: item.objectDetails.categories,
-                    // description: limit_description(item.objectDetails.description),
-                    // thumbnail: item.objectDetails.thumbnail,
+                    id: item.id,
+                    title: item.volumeInfo.title,
+                    authors: item.volumeInfo.authors,
+                    categories: item.volumeInfo.categories,
+                    description: limit_description(item.volumeInfo.description),
+                    thumbnail: item.volumeInfo.imageLinks?.thumbnail,
+                    infoLink: item.volumeInfo.infoLink,
                 }));
-
-
-
-                 // Filter the books based on the title
-                const filteredBooks = books.filter(book =>
-                    book.title.toLowerCase().includes(title.toLowerCase())
-                );
-
-                setResults(filteredBooks);
-
-                // setResults(books);
+                return books;
             } else {
-                setResults([]);
+                return [];
             }
         } catch (error) {
-            console.error("Error fetching the books from library:", error);
-            setResults([]);
+            console.error("Error fetching the books: ", error);
+            return [];
         }
     };
 
 
 
+    // const addBookToLibrary = async (book) => {
+    //     const objectBoundary = {
+    //         objectId: { superapp: "citylibrary", internalObjectId: book.id },
+    //         type: "Book",
+    //         alias: truncate(book.title, 100),
+    //         location: { lat: 0, lng: 0 },
+    //         active: true,
+    //         creationTimestamp: new Date().toISOString(),
+    //         createdBy: {
+    //             userId: {
+    //                 superapp: userDetails.superapp,
+    //                 email: userDetails.email,
+    //             }
+    //         },
+    //         objectDetails: {
+    //             // authors : book.authors,
+    //             categories :   book.categories,
+    //             // description : book.description,
+    //             thumbnail: book.thumbnail,
+    //         }
+    //     };
+
+    //     console.log("Sending payload:", JSON.stringify(objectBoundary, null, 2)); // Log payload
+
+    //     try {
+    //         const response = await axios.post("http://localhost:8084/superapp/objects", objectBoundary, {
+    //             headers: { 'Content-Type': 'application/json' }
+    //         });
+    //         console.log("Book Added to the library successfully:", response.data);
+    //     } catch (error) {
+    //         console.error("Error Adding the book:", error);
+    //     }
+
+    // };
 
 
 
 
 
 
-    const addBookToLibrary = async (book) => {
+
+
+     const addBookToLibrary = async (book, invokedBy) => {
         const objectBoundary = {
             objectId: { superapp: "citylibrary", internalObjectId: book.id },
             type: "Book",
@@ -94,25 +138,43 @@ export const ManageBooks = ({user}) => {
                 }
             },
             objectDetails: {
+                title: book.title,
                 // authors : book.authors,
                 categories :   book.categories,
                 // description : book.description,
                 thumbnail: book.thumbnail,
             }
         };
-
+    
         console.log("Sending payload:", JSON.stringify(objectBoundary, null, 2)); // Log payload
-
+    
         try {
-            const response = await axios.post("http://localhost:8084/superapp/objects", objectBoundary, {
-                headers: { 'Content-Type': 'application/json' }
+            const response = await axios.post("http://localhost:8084/superapp/miniapp/librarian_miniapp", {
+                command: "addbook",
+                commandAttributes: objectBoundary,
+                invokedBy: {
+                    email: `${invokedBy}`
+                }
             });
             console.log("Book Added to the library successfully:", response.data);
         } catch (error) {
             console.error("Error Adding the book:", error);
         }
+    };
 
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 
     const handleDeleteBook = async (bookId) => {
