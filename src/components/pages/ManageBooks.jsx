@@ -12,7 +12,8 @@ export const ManageBooks = ({user}) => {
     const [showSearchFormm, setShowSearchFormm] = useState(false);
     const [userDetails] = useState({ superapp: "citylibrary", email: user ? user.userid.email: "" }); 
     const [booksList, setBooksList] = useState([]);
- 
+    const [displayTable, setDisplayTable] = useState(false);
+
 
 
 
@@ -33,11 +34,10 @@ export const ManageBooks = ({user}) => {
     };
 
 
-     
 
 
 
-     const limit_description = (description) => {
+    const limit_description = (description) => {
         if (!description) {
             return "No description available.";
         }
@@ -94,10 +94,6 @@ export const ManageBooks = ({user}) => {
     };
 
 
-
-
-
-
     const handleDelSearch = async (title) => {
         try {
             const response = await axios.get(`http://localhost:8084/superapp/objects/search/byType/Book`, {
@@ -119,8 +115,6 @@ export const ManageBooks = ({user}) => {
                     thumbnail: item.objectDetails.thumbnail,
                 }));
 
-
-
                  // Filter the books based on the title
                 const filteredBooks = books.filter(book =>
                     book.title.toLowerCase().includes(title.toLowerCase())
@@ -137,19 +131,6 @@ export const ManageBooks = ({user}) => {
             setSearchResultss([]);
         }
     };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const addBookToLibrary = async (book, invokedBy) => {
         const objectBoundary = {
@@ -218,16 +199,74 @@ export const ManageBooks = ({user}) => {
         }
     };
 
-
-    const trackBookStatus = async () => {
-        try {
-            const response = await axios.get("http://localhost:8084/superapp/books");
-            console.log("Books fetched successfully:", response.data);
-            setBooksList(response.data); // Assuming response.data is an array of books
-        } catch (error) {
-            console.error("Error fetching books:", error);
+const fetchBooksByType = async (type) => {
+    try {
+        const response = await axios.get(`http://localhost:8084/superapp/objects/search/byType/${type}`, {
+            params: {
+                userSuperapp: userDetails.superapp,
+                userEmail: userDetails.email,
+                size: 20,
+                page: 0
+            },
+        });
+        if (response.data) {
+            const books = response.data.map((item) => ({
+                id: item.objectId.internalObjectId,
+                title: item.alias,
+                thumbnail: item.objectDetails.thumbnail,
+                time: item.creationTimestamp,
+                status: item.type === "Book" ? "Available" : (item.type === "Borrowed_Book" ? "Borrowed" : "Deleted"),
+            }));
+            return books;
+        } else {
+            return [];
         }
-    };
+    } catch (error) {
+        console.error(`Error fetching the books of type ${type}:`, error);
+        return [];
+    }
+};
+
+const trackBookStatus = async () => {
+    try {
+        const bookTypes = ["Book", "Borrowed_Book", "removed_book"];
+        let allBooks = [];
+        for (const type of bookTypes) {
+            const books = await fetchBooksByType(type);
+            allBooks = [...allBooks, ...books];
+        }
+
+        allBooks.sort((a, b) => {
+            if (a.time < b.time) return 1;
+            if (a.time > b.time) return -1;
+            return 0;
+        });
+        setBooksList(allBooks);
+        if(displayTable === true){
+        setDisplayTable(false);
+    } else{
+        setDisplayTable(true);
+    }
+    } catch (error) {
+        console.error("Error fetching the books:", error);
+        setBooksList([]);
+        setDisplayTable(false);
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     return (
         <div>
@@ -308,47 +347,36 @@ export const ManageBooks = ({user}) => {
                     )}
                 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
             {/* Track Status Section */}
             <div className="manage-books-section">
                     <h3>Track Status of Books</h3>
                     <button className="manage_btn" onClick={trackBookStatus}>Track Status</button>
-                    {/* Display table of books */}
-                    <table className="books-table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>ID</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {booksList.map((book) => (
-                                <tr key={book.id}>
-                                    <td>{book.title}</td>
-                                    <td>{book.id}</td>
-                                    <td>{book.status}</td> {/* Assuming status property exists */}
+                     {/* Display table of books  */}
+                     {displayTable && (
+                        <table className="books-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {booksList.map((book) => (
+                                    <tr key={book.id}>
+                                        <td className={book.status === "Borrowed" ? "status-borrow" : (book.status === "Deleted" ? "status-delete" : "status-av")}>{book.id}</td>
+                                        <td className={book.status === "Borrowed" ? "status-borrow" : (book.status === "Deleted" ? "status-delete" : "status-av")}>{book.title}</td>
+                                        <td className={book.status === "Borrowed" ? "status-borrow" : (book.status === "Deleted" ? "status-delete" : "status-av")}>{book.time}</td>
+                                        <td className={book.status === "Borrowed" ? "status-borrow" : (book.status === "Deleted" ? "status-delete" : "status-av")}>{book.status}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
+            </div>
         </div>
-        </div>
-
-        
     );
 };
 
