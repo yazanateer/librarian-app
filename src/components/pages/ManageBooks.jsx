@@ -193,6 +193,7 @@ export const ManageBooks = ({user}) => {
 
             if (response.data) {
                 console.log("Book Removed successfully:", response.data);
+                alert("Book removed successfully");
             }
         } catch (error) {
             console.error("Error removing the book:", error);
