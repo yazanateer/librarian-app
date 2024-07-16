@@ -192,10 +192,10 @@ export const ManageBooks = ({user}) => {
             });
 
             if (response.data) {
-                console.log("Book borrowed successfully:", response.data);
+                console.log("Book Removed successfully:", response.data);
             }
         } catch (error) {
-            console.error("Error borrowing the book:", error);
+            console.error("Error removing the book:", error);
         }
     };
 
