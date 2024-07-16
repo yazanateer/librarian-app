@@ -82,3 +82,9 @@ h1{
     background-color: #e0a800;
 }
 
+.readonly-field {
+    color: red; 
+    background-color: #888; 
+    border: 1px solid #ddd; 
+    padding: 5px; 
+  }
