@@ -17,7 +17,7 @@ export const LibrarianDash = ({ user }) => {
                     
                     <Link to="/ManageBooks" className="libr-card">Mange the books</Link>
                     <Link to="/ManagePatrons" className="libr-card">Manage the patrons</Link>
-                    <div className="libr-card">manage the fines</div>
+                    
 
                 </div>
             </div>    
