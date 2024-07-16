@@ -51,19 +51,17 @@ try {
     const response = await axios.put(
     `http://localhost:8084/superapp/users/citylibrary/${editData.email}`,
     {
-        // Assuming your API expects these fields to be updated
         role: editData.role,
         username: editData.username,
         avatar: editData.avatar,
     }
     );
-    // Optionally handle success response (e.g., show a success message)
     console.log("Edit successful:", response.data);
-    // Assuming you want to refresh the patrons list after update
+    alert("user edited sucessfully");
     fetchPatrons();
 } catch (error) {
     console.error("Error updating patron:", error);
-    // Optionally handle error (e.g., show an error message)
+    alert("Error editeding the user ");
 }
 };
 
@@ -89,7 +87,6 @@ return (
             <button
                 className="action-button"
                 onClick={() => {
-                // Set edit mode for this user
                 setEditModeUserId(user.userId);
                 setEditData({
                     email: user.userid.email,
@@ -153,7 +150,7 @@ return (
         <button
             type="button"
             onClick={() => {
-            handleEdit(editData); // Call handleEdit with editData
+            handleEdit(editData);  
             }}
         >
             Update Patron
